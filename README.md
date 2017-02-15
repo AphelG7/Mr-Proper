@@ -5,6 +5,10 @@
 * Telegram Bot (Privacy Mode disabled)
 * MongoDB
 
+### Executables
+
+You can find the latest binaries for the bot [here](https://github.com/4m4rOk/Mr-Proper/releases).
+
 ### Configuration
 
 Keep a file called *mrproper.config* in the same directory as the executable.
