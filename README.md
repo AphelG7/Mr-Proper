@@ -1,11 +1,11 @@
-# Mr-Proper
+# Mr. Proper
 
-#### Requirements
+### Requirements
 
 * Telegram Bot (Privacy Mode disabled)
 * MongoDB
 
-#### Config
+### Configuration
 
 Keep a file called *mrproper.config* in the same directory as the executable.
 It needs to look like this:
