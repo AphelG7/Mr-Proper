@@ -24,3 +24,4 @@ _testmain.go
 *.prof
 
 mrproper.config
+.DS_Store
