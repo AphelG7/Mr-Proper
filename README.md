@@ -1,5 +1,7 @@
 # Mr. Proper
 
+If you want to see an instance of the bot in action have a look at [@ProperlyGroupBot](https://t.me/ProperlyGroupBot).
+
 ### Requirements
 
 * Telegram Bot (Privacy Mode disabled)
