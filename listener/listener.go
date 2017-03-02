@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/4m4rOk/Mr-Proper/commands"
+	"github.com/4m4rOk/Mr-Proper/configuration"
 	"github.com/4m4rOk/Mr-Proper/functions"
 	"github.com/4m4rOk/Mr-Proper/mongo"
 	"github.com/4m4rOk/Mr-Proper/telegram"
@@ -99,10 +100,16 @@ func handleGroupMessage(message *tgbotapi.Message) {
 }
 
 func handlePrivateCommand(message *tgbotapi.Message) {
-	if message.Command() == "groupslist" {
-		commands.GroupsList(message)
-	} else {
-		handlePrivateMessage(message)
+	for _, admin := range configuration.Config.Telegram.Admins {
+		if admin == message.From.ID {
+			if message.Command() == "groupslist" {
+				commands.GroupsList(message)
+			} else {
+				handlePrivateMessage(message)
+			}
+		} else {
+			handlePrivateMessage(message)
+		}
 	}
 }
 

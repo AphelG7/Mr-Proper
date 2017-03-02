@@ -12,8 +12,10 @@ type configInfo struct {
 }
 
 type telegramConfig struct {
-	Token string
-	Debug bool
+	Token   string
+	Timeout int
+	Admins  []int
+	Debug   bool
 }
 
 type mongoConfig struct {

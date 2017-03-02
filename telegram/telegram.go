@@ -12,5 +12,5 @@ func init() {
 	Bot.Debug = configuration.Config.Telegram.Debug
 
 	UpdateConfig = tgbotapi.NewUpdate(0)
-	UpdateConfig.Timeout = 60
+	UpdateConfig.Timeout = configuration.Config.Telegram.Timeout
 }
