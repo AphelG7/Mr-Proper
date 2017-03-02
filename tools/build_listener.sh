@@ -1,3 +1,5 @@
+cd "${0%/*}"
+echo "Formatting code..."
 ./fmt_proper.sh
 echo "Building listener for darwin i386..."
 GOOS=darwin GOARCH=386 go build -o ../../../../../bin/Mr-Proper/MrProper_darwin_386 github.com/4m4rOk/Mr-Proper/listener
