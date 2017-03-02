@@ -1,9 +1,9 @@
 package functions
 
 import (
-	"github.com/4m4rOk/Mr-Proper/telegram"
 	"github.com/4m4rOk/Mr-Proper/configuration"
 	"github.com/4m4rOk/Mr-Proper/mongo"
+	"github.com/4m4rOk/Mr-Proper/telegram"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gopkg.in/mgo.v2/bson"
 	"log"
@@ -35,6 +35,15 @@ func NewGroup(mchat *tgbotapi.Chat) {
 		telegram.Bot.LeaveChat(mchat.ChatConfig())
 		return
 	} else {
+		collection := mongo.Database.DB(configuration.Config.Mongo.Database).C(strconv.FormatInt(mchat.ID, 10))
+		var group mongo.Group
+		group.ID = 0
+		group.Link = ""
+		group.AutoIdle = 0
+		group.AutoKick = 0
+
+		collection.Insert(group)
+
 		response := tgbotapi.NewMessage(mchat.ID, "I am the warden of this group. Farewell lurkers and stalkers.")
 		telegram.Bot.Send(response)
 
@@ -103,28 +112,22 @@ func UpdateLink(message *tgbotapi.Message) {
 	argument := message.CommandArguments()
 	var response tgbotapi.MessageConfig
 
-	log.Printf(dgroup.Link)
-
 	if strings.HasPrefix(argument, "https://t.me/") || strings.HasPrefix(argument, "https://telegram.me/") {
+		var mgroup mongo.Group
+		mgroup.ID = 0
+		mgroup.Link = argument
+		mgroup.AutoIdle = mgroup.AutoIdle
+		mgroup.AutoKick = mgroup.AutoKick
+
+		collection.Update(bson.M{"_id": 0}, &mgroup)
+
 		if dgroup.Link == "" {
-			var mgroup mongo.Group
-			mgroup.ID = 0
-			mgroup.Link = argument
-
-			collection.Insert(mgroup)
-
 			response = tgbotapi.NewMessage(message.Chat.ID, "Thanks for letting me know!")
 
 			if configuration.Config.Mongo.Debug {
 				log.Printf("Created link %s for chat %s.", argument, strconv.FormatInt(message.Chat.ID, 10))
 			}
 		} else {
-			var mgroup mongo.Group
-			mgroup.ID = 0
-			mgroup.Link = argument
-
-			collection.Update(bson.M{"_id": 0}, &mgroup)
-
 			response = tgbotapi.NewMessage(message.Chat.ID, "Thanks for the new link!")
 
 			if configuration.Config.Mongo.Debug {
@@ -136,4 +139,12 @@ func UpdateLink(message *tgbotapi.Message) {
 	}
 	response.ReplyToMessageID = message.MessageID
 	telegram.Bot.Send(response)
+}
+
+func GetGroups() []string {
+	collections, err := mongo.Database.DB(configuration.Config.Mongo.Database).CollectionNames()
+	if err != nil {
+		log.Fatal(err)
+	}
+	return collections
 }

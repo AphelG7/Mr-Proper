@@ -1,10 +1,10 @@
 package commands
 
 import (
-	"github.com/4m4rOk/Mr-Proper/telegram"
-	"github.com/4m4rOk/Mr-Proper/functions"
 	"github.com/4m4rOk/Mr-Proper/configuration"
+	"github.com/4m4rOk/Mr-Proper/functions"
 	"github.com/4m4rOk/Mr-Proper/mongo"
+	"github.com/4m4rOk/Mr-Proper/telegram"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"gopkg.in/mgo.v2/bson"
 	"html"
@@ -103,7 +103,7 @@ func Kick(message *tgbotapi.Message) {
 		days = 0
 	}
 
-	if days == 0 {
+	if days < 1 {
 		response = tgbotapi.NewMessage(message.Chat.ID, message.From.FirstName+".... Nope. Nope. Nope. Nope.")
 		response.ReplyToMessageID = message.MessageID
 		telegram.Bot.Send(response)
@@ -142,5 +142,131 @@ func Kick(message *tgbotapi.Message) {
 	}
 
 	response.ReplyToMessageID = message.MessageID
+	telegram.Bot.Send(response)
+}
+
+func AutoIdle(message *tgbotapi.Message) {
+	argument := message.CommandArguments()
+
+	var days float64
+	days, err := strconv.ParseFloat(argument, 64)
+	if err != nil {
+		days = 0
+	}
+
+	var response tgbotapi.MessageConfig
+
+	if days < 1 && days != 0 {
+		response = tgbotapi.NewMessage(message.Chat.ID, message.From.FirstName+".... Nope. Nope. Nope. Nope.")
+		response.ReplyToMessageID = message.MessageID
+		telegram.Bot.Send(response)
+		return
+	}
+
+	collection := mongo.Database.DB(configuration.Config.Mongo.Database).C(strconv.FormatInt(message.Chat.ID, 10))
+
+	var group mongo.Group
+	collection.Find(bson.M{"_id": 0}).One(&group)
+
+	if days == 0 {
+		if group.AutoIdle != 0 {
+			group.AutoIdle = 0
+			collection.Update(bson.M{"_id": 0}, &group)
+			response = tgbotapi.NewMessage(message.Chat.ID, "No problem, I will stop telling you about inactive users.")
+		} else {
+			response = tgbotapi.NewMessage(message.Chat.ID, "Let me know how long people can lurk before I notify "+html.EscapeString(message.Chat.Title)+" about them by using <i>/autoidle {{number of days}}</i>.")
+		}
+	} else {
+		if group.AutoIdle == days {
+			response = tgbotapi.NewMessage(message.Chat.ID, "You've already told me to notify "+html.EscapeString(message.Chat.Title)+" about peeps which are inactive for more than "+strconv.FormatFloat(days, 'g', -1, 64)+" days...")
+		} else {
+			group.AutoIdle = days
+			collection.Update(bson.M{"_id": 0}, &group)
+			response = tgbotapi.NewMessage(message.Chat.ID, "Got it! I will notify "+html.EscapeString(message.Chat.Title)+" about people who lurk for longer than "+strconv.FormatFloat(days, 'g', -1, 64)+" days at a time now!")
+		}
+
+	}
+
+	response.ReplyToMessageID = message.MessageID
+	response.ParseMode = "HTML"
+	telegram.Bot.Send(response)
+}
+
+func AutoKick(message *tgbotapi.Message) {
+	argument := message.CommandArguments()
+
+	var days float64
+	days, err := strconv.ParseFloat(argument, 64)
+	if err != nil {
+		days = 0
+	}
+
+	var response tgbotapi.MessageConfig
+
+	if days < 1 && days != 0 {
+		response = tgbotapi.NewMessage(message.Chat.ID, message.From.FirstName+".... Nope. Nope. Nope. Nope.")
+		response.ReplyToMessageID = message.MessageID
+		telegram.Bot.Send(response)
+		return
+	}
+
+	collection := mongo.Database.DB(configuration.Config.Mongo.Database).C(strconv.FormatInt(message.Chat.ID, 10))
+
+	var group mongo.Group
+	collection.Find(bson.M{"_id": 0}).One(&group)
+
+	if days == 0 {
+		if group.AutoKick != 0 {
+			group.AutoKick = 0
+			collection.Update(bson.M{"_id": 0}, &group)
+			response = tgbotapi.NewMessage(message.Chat.ID, "Oh.. okay. I will stop kicking inactive users by myself!")
+		} else {
+			response = tgbotapi.NewMessage(message.Chat.ID, "Let me know how long people can lurk before I kick them out of "+html.EscapeString(message.Chat.Title)+" for good! Use <i>/autokick {{number of days}}</i>.")
+		}
+	} else {
+		if group.AutoKick == days {
+			response = tgbotapi.NewMessage(message.Chat.ID, "You've already told me to kick peeps which are inactive for more than "+strconv.FormatFloat(days, 'g', -1, 64)+" days...")
+		} else {
+			group.AutoKick = days
+			collection.Update(bson.M{"_id": 0}, &group)
+			response = tgbotapi.NewMessage(message.Chat.ID, "Got it! I will kick all them peeps out of "+html.EscapeString(message.Chat.Title)+" if any lurk longer than "+strconv.FormatFloat(days, 'g', -1, 64)+" days at a time now!")
+		}
+
+	}
+
+	response.ReplyToMessageID = message.MessageID
+	response.ParseMode = "HTML"
+	telegram.Bot.Send(response)
+}
+
+func GroupsList(message *tgbotapi.Message) {
+	groups := functions.GetGroups()
+
+	var response tgbotapi.MessageConfig
+
+	if len(groups) == 0 {
+		response = tgbotapi.NewMessage(message.Chat.ID, "I don't have any groups to show. Add me to groups first!")
+	} else {
+		var text string
+		for _, group := range groups {
+			groupId, err := strconv.ParseInt(group, 10, 64)
+			if err == nil {
+				var chatConfig tgbotapi.ChatConfig
+
+				chatConfig.ChatID = groupId
+				chat, err := telegram.Bot.GetChat(chatConfig)
+				if err == nil {
+					var id string
+					if chat.UserName == "" {
+						id = strconv.FormatInt(chat.ID, 10)
+					} else {
+						id = "@" + chat.UserName
+					}
+					text = text + html.EscapeString(chat.Title) + " — " + id + "\n"
+				}
+			}
+		}
+		response = tgbotapi.NewMessage(message.Chat.ID, text)
+	}
 	telegram.Bot.Send(response)
 }

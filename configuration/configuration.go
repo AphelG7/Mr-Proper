@@ -2,8 +2,8 @@ package configuration
 
 import (
 	"github.com/BurntSushi/toml"
-	"os"
 	"log"
+	"os"
 )
 
 type configInfo struct {

@@ -1,8 +1,8 @@
 package mongo
 
 import (
-	"gopkg.in/mgo.v2"
 	"github.com/4m4rOk/Mr-Proper/configuration"
+	"gopkg.in/mgo.v2"
 )
 
 type User struct {
@@ -13,8 +13,10 @@ type User struct {
 }
 
 type Group struct {
-	ID   int    `bson:"_id"`
-	Link string `bson:"Link"`
+	ID       int     `bson:"_id"`
+	Link     string  `bson:"Link"`
+	AutoIdle float64 `bson:"AutoIdle"`
+	AutoKick float64 `bson:"AutoKick"`
 }
 
 var Database, _ = mgo.Dial(configuration.Config.Mongo.Url)

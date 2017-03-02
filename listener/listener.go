@@ -3,19 +3,16 @@ package main
 import (
 	"github.com/4m4rOk/Mr-Proper/commands"
 	"github.com/4m4rOk/Mr-Proper/functions"
-	"github.com/4m4rOk/Mr-Proper/telegram"
-	//"github.com/4m4rOk/Mr-Proper/configuration"
 	"github.com/4m4rOk/Mr-Proper/mongo"
+	"github.com/4m4rOk/Mr-Proper/telegram"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
+	"strings"
 )
-
-
-
 
 func main() {
 	defer mongo.Database.Close()
-	
+
 	updates, err := telegram.Bot.GetUpdatesChan(telegram.UpdateConfig)
 	if err != nil {
 		log.Fatal(err)
@@ -27,7 +24,11 @@ func main() {
 		}
 
 		if update.Message.Chat.IsPrivate() {
-			handlePrivate(update.Message)
+			if update.Message.IsCommand() {
+				handlePrivateCommand(update.Message)
+			} else {
+				handlePrivateMessage(update.Message)
+			}
 		} else if update.Message.Chat.IsGroup() || update.Message.Chat.IsSuperGroup() {
 			if update.Message.IsCommand() {
 				handleGroupCommand(update.Message)
@@ -57,6 +58,15 @@ func handleGroupCommand(message *tgbotapi.Message) {
 			} else {
 				commands.Kick(message)
 			}
+		} else if message.Command() == "autoidle" {
+			commands.AutoIdle(message)
+		} else if message.Command() == "autokick" {
+			if message.Chat.IsSuperGroup() == false {
+				response := tgbotapi.NewMessage(message.Chat.ID, "I can only kick in supergroups, sorry!")
+				telegram.Bot.Send(response)
+			} else {
+				commands.AutoKick(message)
+			}
 		}
 	}
 }
@@ -67,7 +77,12 @@ func handleGroupMessage(message *tgbotapi.Message) {
 			functions.NewGroup(message.Chat)
 			return
 		} else {
-			functions.UpdateUser(message.NewChatMember, message.Chat, message.Date)
+			if message.NewChatMember.UserName != "" {
+				username := strings.ToLower(message.NewChatMember.UserName)
+				if strings.HasSuffix(username, "bot") == false {
+					functions.UpdateUser(message.NewChatMember, message.Chat, message.Date)
+				}
+			}
 			return
 		}
 	}
@@ -83,7 +98,15 @@ func handleGroupMessage(message *tgbotapi.Message) {
 	functions.UpdateUser(message.From, message.Chat, message.Date)
 }
 
-func handlePrivate(message *tgbotapi.Message) {
+func handlePrivateCommand(message *tgbotapi.Message) {
+	if message.Command() == "groupslist" {
+		commands.GroupsList(message)
+	} else {
+		handlePrivateMessage(message)
+	}
+}
+
+func handlePrivateMessage(message *tgbotapi.Message) {
 	response := tgbotapi.NewMessage(message.Chat.ID, "Hello dear creator. Make me admin in a supergroup of yours and I will show you how to rule properly.")
 	telegram.Bot.Send(response)
 }
