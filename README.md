@@ -19,6 +19,8 @@ It needs to look like this:
 ```
 [Telegram]
 	Token = "1234:token"
+	Timeout = 300
+	Admins = [12345,54321]
 	Debug = false
 	
 [Mongo]
