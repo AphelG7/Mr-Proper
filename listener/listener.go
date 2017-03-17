@@ -107,6 +107,7 @@ func handlePrivateCommand(message *tgbotapi.Message) {
 			} else {
 				handlePrivateMessage(message)
 			}
+			return
 		} else {
 			handlePrivateMessage(message)
 		}
